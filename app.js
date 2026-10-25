@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderFilmes();
   renderSeries();
   renderDocs();
+  loadCloudTitles();
   renderCuriosidades();
   renderResenhas();
 });
