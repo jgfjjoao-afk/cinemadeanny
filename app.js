@@ -865,12 +865,28 @@ async function deleteTitle(id, type) {
     doc: { colecao: 'documentarios', chave: 'docs' }
   };
 
-  const destino = configuracao[type];
+  const tipos = {
+  filmes: 'filmes',
+  filme: 'filmes',
+  series: 'series',
+  serie: 'series',
+  docs: 'documentarios',
+  doc: 'documentarios',
+  documentarios: 'documentarios'
+};
 
-  if (!destino) {
-    showToast('Tipo de título inválido.');
-    return;
-  }
+const colecao = tipos[String(type).toLowerCase()];
+
+if (!colecao) {
+  console.error('Tipo recebido pela exclusão:', type);
+  showToast('Tipo inválido: ' + type);
+  return;
+}
+
+const destino = {
+  colecao: colecao,
+  chave: colecao === 'documentarios' ? 'docs' : colecao
+};
 
   try {
     await db.collection(destino.colecao)
