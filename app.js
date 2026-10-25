@@ -399,7 +399,7 @@ async function openDetail(id, tipo) {
   <button
     class="btn btn-danger"
     style="margin-top:10px;"
-    onclick="alert('Botão clicado'); excluirComentario('${c.id}', '${id}', '${tipo}')">
+    onclick="excluirComentario('${c.id}', '${id}', '${tipo}')">
     🗑️ Apagar comentário
   </button>
 ` : ''}
