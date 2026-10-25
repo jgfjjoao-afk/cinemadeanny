@@ -157,10 +157,14 @@ function createCard(item) {
   return `
     <div class="card" onclick="openDetail('${item.id}', '${item.tipo}')">
       <div class="card-poster">
-        <div class="card-poster-placeholder">🎬</div>
-        ${rating}
-        ${item.classificacao ? `<div class="card-badge">${item.classificacao}</div>` : ''}
-      </div>
+  ${
+    item.posterUrl
+      ? `<img src="${item.posterUrl}" alt="Pôster de ${item.titulo}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" onerror="this.style.display='none';">`
+      : '<div class="card-poster-placeholder">🎬</div>'
+  }
+  ${rating}
+  ${item.classificacao ? `<div class="card-badge">${item.classificacao}</div>` : ''}
+</div>
       <div class="card-body">
         <h3 class="card-title">${item.titulo}</h3>
         <div class="card-meta">${meta}</div>
