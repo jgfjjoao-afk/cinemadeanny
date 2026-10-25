@@ -5,6 +5,7 @@
 
 // Estado global
 let currentSection = 'home';
+let detailReturnSection = 'filmes';
 let isAdmin = false;
 let currentFilter = { filmes: 'all', series: 'all', docs: 'all' };
 let editingReviewId = null;
@@ -285,6 +286,10 @@ function renderCuriosidades() {
 
 // ========== DETALHE ==========
 function openDetail(id, tipo) {
+     detailReturnSection =
+    tipo === 'serie' ? 'series' :
+    tipo === 'doc' ? 'docs' :
+    'filmes';
   let item = null;
   if (tipo === 'filme') item = getAllFilmes().find(f => f.id === id);
   else if (tipo === 'serie') item = getAllSeries().find(s => s.id === id);
