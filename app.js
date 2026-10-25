@@ -455,7 +455,7 @@ async function submitComment(itemId) {
 
     showToast('Opinião publicada com sucesso! 🎬');
 
-    openDetail(itemId, item.tipo);
+await openDetail(itemId, item.tipo);
 
     } catch (erro) {
     console.error('Erro ao publicar comentário:', erro);
