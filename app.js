@@ -165,7 +165,25 @@ function saveComments(comments) {
 }
 
 function getCustomTitles() {
-  return JSON.parse(localStorage.getItem(STORAGE.customTitles) || '{"filmes":[],"series":[],"docs":[]}');
+  const local = JSON.parse(
+    localStorage.getItem(STORAGE.customTitles) ||
+    '{"filmes":[],"series":[],"docs":[]}'
+  );
+
+  function combinar(titulosLocais, titulosFirebase) {
+    const mapa = new Map();
+
+    titulosLocais.forEach(titulo => mapa.set(titulo.id, titulo));
+    titulosFirebase.forEach(titulo => mapa.set(titulo.id, titulo));
+
+    return Array.from(mapa.values());
+  }
+
+  return {
+    filmes: combinar(local.filmes || [], cloudTitles.filmes),
+    series: combinar(local.series || [], cloudTitles.series),
+    docs: combinar(local.docs || [], cloudTitles.docs)
+  };
 }
 
 function saveCustomTitles(data) {
