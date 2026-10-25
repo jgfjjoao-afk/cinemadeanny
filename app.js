@@ -401,7 +401,7 @@ function switchTab(btn, tabId) {
 }
 
 // ========== COMENTÁRIOS ==========
-function submitComment(itemId) {
+async function submitComment(itemId) {
   const nome = document.getElementById('commentName').value.trim();
   const nota = parseFloat(document.getElementById('commentScore').value);
   const texto = document.getElementById('commentText').value.trim();
@@ -410,30 +410,43 @@ function submitComment(itemId) {
     showToast('Por favor, digite um nome ou apelido.');
     return;
   }
+
   if (isNaN(nota) || nota < 0 || nota > 10) {
     showToast('A nota deve ser entre 0 e 10.');
     return;
   }
+
   if (!texto || texto.length < 5) {
     showToast('Escreva um comentário um pouco mais longo.');
     return;
   }
 
-  const comments = getComments();
-  if (!comments[itemId]) comments[itemId] = [];
+  try {
+    const item = [...getAllFilmes(), ...getAllSeries(), ...getAllDocs()]
+      .find(i => String(i.id) === String(itemId));
 
-  comments[itemId].push({
-    nome,
-    nota,
-    texto,
-    data: new Date().toLocaleDateString('pt-BR')
-  });
+    if (!item) {
+      showToast('Não foi possível encontrar o filme ou série.');
+      return;
+    }
 
-  saveComments(comments);
-  showToast('Opinião publicada com sucesso! 🎬');
-  
-  const item = [...getAllFilmes(), ...getAllSeries(), ...getAllDocs()].find(i => i.id === itemId);
-  if (item) openDetail(itemId, item.tipo);
+    await db.collection('comentarios').add({
+      itemId: String(itemId),
+      nome: nome,
+      nota: nota,
+      texto: texto,
+      data: new Date().toLocaleDateString('pt-BR'),
+      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    showToast('Opinião publicada com sucesso! 🎬');
+
+    openDetail(itemId, item.tipo);
+
+  } catch (erro) {
+    console.error('Erro ao publicar comentário:', erro);
+    showToast('Erro ao publicar. Verifique sua conexão.');
+  }
 }
 
 // ========== RESENHAS ==========
