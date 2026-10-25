@@ -846,7 +846,8 @@ function editTitle(id, type) {
 }
 
 async function deleteTitle(id, type) {
-  if (!auth.currentUser || auth.currentUser.uid !== 'fKpUgGscF2gDj7KyAEMf1gmSFCI3') {
+  if (!auth.currentUser ||
+      auth.currentUser.uid !== 'fKpUgGscF2gDj7KyAEMf1gmSFCI3') {
     showToast('Entre na conta administrativa para excluir.');
     return;
   }
@@ -856,6 +857,9 @@ async function deleteTitle(id, type) {
   }
 
   const configuracao = {
+    filmes: { colecao: 'filmes', chave: 'filmes' },
+    series: { colecao: 'series', chave: 'series' },
+    docs: { colecao: 'documentarios', chave: 'docs' },
     filme: { colecao: 'filmes', chave: 'filmes' },
     serie: { colecao: 'series', chave: 'series' },
     doc: { colecao: 'documentarios', chave: 'docs' }
@@ -869,10 +873,28 @@ async function deleteTitle(id, type) {
   }
 
   try {
-    await db.collection(destino.colecao).doc(String(id)).delete();
+    await db.collection(destino.colecao)
+      .doc(String(id))
+      .delete();
 
-    cloudTitles[destino.chave] = cloudTitles[destino.chave].filter(
-      titulo => titulo.id !== id
+    cloudTitles[destino.chave] =
+      cloudTitles[destino.chave].filter(
+        titulo => String(titulo.id) !== String(id)
+      );
+
+    const custom = JSON.parse(
+      localStorage.getItem(STORAGE.customTitles) ||
+      '{"filmes":[],"series":[],"docs":[]}'
+    );
+
+    custom[destino.chave] =
+      (custom[destino.chave] || []).filter(
+        titulo => String(titulo.id) !== String(id)
+      );
+
+    localStorage.setItem(
+      STORAGE.customTitles,
+      JSON.stringify(custom)
     );
 
     updateAdminPanel();
@@ -880,10 +902,10 @@ async function deleteTitle(id, type) {
     renderSeries();
     renderDocs();
 
-    showToast('Título excluído do Firebase.');
+    showToast('Título excluído com sucesso! 🗑️');
   } catch (erro) {
     console.error('Erro ao excluir título:', erro);
-    showToast('Não foi possível excluir o título.');
+    showToast('Erro ao excluir. Verifique sua conexão.');
   }
 }
 
