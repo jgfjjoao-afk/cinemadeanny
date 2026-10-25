@@ -10,6 +10,12 @@ let currentFilter = { filmes: 'all', series: 'all', docs: 'all' };
 let editingReviewId = null;
 let editingTitleId = null;
 let editingTitleType = null;
+// Títulos carregados do Firebase Firestore
+let cloudTitles = {
+  filmes: [],
+  series: [],
+  docs: []
+};
 
 // Chaves do localStorage
 const STORAGE = {
