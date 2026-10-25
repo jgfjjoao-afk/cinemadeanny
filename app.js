@@ -662,6 +662,7 @@ function saveTitle() {
   const nota = parseFloat(document.getElementById('titleNota').value);
   const generosStr = document.getElementById('titleGeneros').value.trim();
   const sinopse = document.getElementById('titleSinopse').value.trim();
+  const posterUrl = document.getElementById('titlePoster').value.trim();
   const classificacao = document.getElementById('titleClassificacao').value.trim();
   const id = document.getElementById('titleId').value || (editingTitleType.charAt(0) + Date.now());
 
