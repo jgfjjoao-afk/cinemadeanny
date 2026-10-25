@@ -242,7 +242,7 @@ function openDetail(id, tipo) {
       <div class="detail-poster">
   ${
     item.posterUrl
-      ? `<img src="${item.posterUrl}" alt="Pôster de ${item.titulo}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';">`
+      ? `<img src="${item.posterUrl}" alt="Pôster de ${item.titulo}" style="display:block;width:100%;max-width:100%;height:auto;min-height:200px;object-fit:cover;" onerror="this.alt='Erro ao carregar o pôster';this.style.display='block';">`
       : '<div class="detail-poster-placeholder">🎬</div>'
   }
 </div>
