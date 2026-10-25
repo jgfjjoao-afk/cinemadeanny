@@ -757,7 +757,7 @@ function closeTitleModal() {
   editingTitleType = null;
 }
 
-function saveTitle() {
+async function saveTitle() {
   const nome = document.getElementById('titleNome').value.trim();
   const ano = parseInt(document.getElementById('titleAno').value) || null;
   const nota = parseFloat(document.getElementById('titleNota').value);
@@ -772,19 +772,26 @@ function saveTitle() {
     return;
   }
 
-  const genero = generosStr ? generosStr.split(',').map(g => g.trim()).filter(Boolean) : [];
+  if (!auth.currentUser || auth.currentUser.uid !== 'fKpUgGscF2gDj7KyAEMf1gmSFCI3') {
+    showToast('Entre na conta administrativa para salvar.');
+    return;
+  }
+
+  const genero = generosStr
+    ? generosStr.split(',').map(g => g.trim()).filter(Boolean)
+    : [];
 
   const item = {
-  id,
-  titulo: nome,
-  ano,
-  genero,
-  sinopse,
-  posterUrl,
-  classificacao: classificacao || null,
-  notaAnny: isNaN(nota) ? null : nota,
-  tipo: editingTitleType
-};
+    id,
+    titulo: nome,
+    ano,
+    genero,
+    sinopse,
+    posterUrl,
+    classificacao: classificacao || null,
+    notaAnny: isNaN(nota) ? null : nota,
+    tipo: editingTitleType
+  };
 
   if (editingTitleType === 'serie') {
     item.temporadas = parseInt(document.getElementById('titleTemporadas').value) || 1;
@@ -795,24 +802,42 @@ function saveTitle() {
     item.tema = genero[0] || 'Geral';
   }
 
-  const custom = getCustomTitles();
-  const key = editingTitleType === 'filme' ? 'filmes' : editingTitleType === 'serie' ? 'series' : 'docs';
-  
-  const existingIdx = (custom[key] || []).findIndex(t => t.id === id);
-  if (existingIdx >= 0) {
-    custom[key][existingIdx] = item;
-  } else {
-    if (!custom[key]) custom[key] = [];
-    custom[key].unshift(item);
+  const configuracao = {
+    filme: { colecao: 'filmes', chave: 'filmes' },
+    serie: { colecao: 'series', chave: 'series' },
+    doc: { colecao: 'documentarios', chave: 'docs' }
+  };
+
+  const destino = configuracao[editingTitleType];
+
+  if (!destino) {
+    showToast('Tipo de título inválido.');
+    return;
   }
 
-  saveCustomTitles(custom);
-  closeTitleModal();
-  updateAdminPanel();
-  renderFilmes();
-  renderSeries();
-  renderDocs();
-  showToast('Título salvo com sucesso! 🎬');
+  try {
+    await db.collection(destino.colecao).doc(String(id)).set(item);
+
+    const lista = cloudTitles[destino.chave];
+    const indice = lista.findIndex(t => t.id === id);
+
+    if (indice >= 0) {
+      lista[indice] = item;
+    } else {
+      lista.unshift(item);
+    }
+
+    closeTitleModal();
+    updateAdminPanel();
+    renderFilmes();
+    renderSeries();
+    renderDocs();
+
+    showToast('Título salvo no Firebase! 🎬');
+  } catch (erro) {
+    console.error('Erro ao salvar título:', erro);
+    showToast('Erro ao salvar. Verifique sua conexão.');
+  }
 }
 
 function editTitle(id, type) {
