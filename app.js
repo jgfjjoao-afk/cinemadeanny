@@ -299,7 +299,7 @@ function renderCuriosidades() {
 }
 
 // ========== DETALHE ==========
-function openDetail(id, tipo) {
+async function openDetail(id, tipo) {
      detailReturnSection =
     tipo === 'serie' ? 'series' :
     tipo === 'doc' ? 'docs' :
@@ -312,7 +312,7 @@ function openDetail(id, tipo) {
   if (!item) return;
 
   const reviews = getReviews().filter(r => r.filme === item.titulo && r.status === 'publicado');
-  const comments = getComments()[id] || [];
+  const comments = await carregarComentarios(id);
   const avgPublic = comments.length 
     ? (comments.reduce((s, c) => s + (c.nota || 0), 0) / comments.length).toFixed(1) 
     : null;
