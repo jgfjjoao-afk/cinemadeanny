@@ -392,8 +392,17 @@ async function openDetail(id, tipo) {
               <span class="comment-author">${escapeHtml(c.nome)}</span>
               <span class="comment-date">${c.data}</span>
             </div>
-            <div class="comment-rating">★ ${c.nota}/10</div>
+                        <div class="comment-rating">★ ${c.nota}/10</div>
             <div class="comment-text">${escapeHtml(c.texto)}</div>
+
+            ${isAdmin ? `
+              <button
+                class="btn btn-danger"
+                style="margin-top:10px;"
+                onclick="excluirComentario('${c.id}', '${id}', '${tipo}')">
+                🗑️ Apagar comentário
+              </button>
+            ` : ''}
           </div>
         `).join('') : '<div class="empty-state"><div class="icon">💬</div><h3>Nenhum comentário ainda</h3><p>Seja o primeiro a opinar!</p></div>'}
       </div>
@@ -1097,4 +1106,31 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+
+   async function excluirComentario(comentarioId, itemId, tipo) {
+  if (!isAdmin) {
+    showToast('Você não tem permissão para apagar comentários.');
+    return;
+  }
+
+  const confirmar = confirm(
+    'Tem certeza que deseja apagar este comentário?'
+  );
+
+  if (!confirmar) return;
+
+  try {
+    await db.collection('comentarios')
+      .doc(comentarioId)
+      .delete();
+
+    showToast('Comentário apagado com sucesso!');
+
+    await openDetail(itemId, tipo);
+
+  } catch (erro) {
+    console.error('Erro ao apagar comentário:', erro);
+    showToast('Erro ao apagar: ' + (erro.code || erro.message));
+  }
+   }
 }
