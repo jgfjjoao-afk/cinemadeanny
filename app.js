@@ -161,7 +161,21 @@ function saveReviews(reviews) {
 function getComments() {
   return JSON.parse(localStorage.getItem(STORAGE.comments) || '{}');
 }
+async function carregarComentarios(itemId) {
+  try {
+    const resultado = await db.collection('comentarios')
+      .where('itemId', '==', String(itemId))
+      .get();
 
+    return resultado.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (erro) {
+    console.error('Erro ao carregar comentários:', erro);
+    return [];
+  }
+}
 function saveComments(comments) {
   localStorage.setItem(STORAGE.comments, JSON.stringify(comments));
 }
