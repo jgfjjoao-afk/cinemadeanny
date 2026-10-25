@@ -457,9 +457,9 @@ async function submitComment(itemId) {
 
     openDetail(itemId, item.tipo);
 
-  } catch (erro) {
+    } catch (erro) {
     console.error('Erro ao publicar comentário:', erro);
-    showToast('Erro ao publicar. Verifique sua conexão.');
+    showToast('Erro: ' + (erro.code || erro.message));
   }
 }
 
