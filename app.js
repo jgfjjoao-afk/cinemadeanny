@@ -110,7 +110,44 @@ function loadAllData() {
     localStorage.setItem(STORAGE.customTitles, JSON.stringify({ filmes: [], series: [], docs: [] }));
   }
 }
+async function loadCloudTitles() {
+  try {
+    const [filmesSnap, seriesSnap, docsSnap] = await Promise.all([
+      db.collection('filmes').get(),
+      db.collection('series').get(),
+      db.collection('documentarios').get()
+    ]);
 
+    cloudTitles.filmes = filmesSnap.docs.map(doc => ({
+      ...doc.data(),
+      id: doc.id,
+      tipo: 'filme'
+    }));
+
+    cloudTitles.series = seriesSnap.docs.map(doc => ({
+      ...doc.data(),
+      id: doc.id,
+      tipo: 'serie'
+    }));
+
+    cloudTitles.docs = docsSnap.docs.map(doc => ({
+      ...doc.data(),
+      id: doc.id,
+      tipo: 'doc'
+    }));
+
+    renderFilmes();
+    renderSeries();
+    renderDocs();
+
+    if (isAdmin) {
+      updateAdminPanel();
+    }
+  } catch (erro) {
+    console.error('Erro ao carregar títulos do Firebase:', erro);
+    showToast('Erro ao carregar títulos do banco de dados.');
+  }
+}
 function getReviews() {
   return JSON.parse(localStorage.getItem(STORAGE.reviews) || '[]');
 }
