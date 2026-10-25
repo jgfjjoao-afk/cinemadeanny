@@ -227,9 +227,27 @@
           <h2>🎬 Área Administrativa</h2>
           <p>Somente a Anny pode acessar esta área</p>
           <div class="form-group">
-            <label>Senha</label>
-            <input type="password" id="adminPassword" placeholder="Digite a senha" onkeydown="if(event.key==='Enter')loginAdmin()">
-          </div>
+  <label>E-mail</label>
+  <input
+    type="email"
+    id="adminEmail"
+    placeholder="Digite seu e-mail"
+    autocomplete="username"
+    required
+  >
+</div>
+
+<div class="form-group">
+  <label>Senha</label>
+  <input
+    type="password"
+    id="adminPassword"
+    placeholder="Digite sua senha"
+    autocomplete="current-password"
+    onkeydown="if(event.key==='Enter')loginAdmin()"
+    required
+  >
+</div>
           <button class="btn btn-gold" style="width:100%;" onclick="loginAdmin()">Entrar</button>
           <p style="margin-top:1rem;font-size:0.75rem;color:var(--gray);">SOMENTE <strong>ADMINISTRADOR</strong></p>
         </div>
