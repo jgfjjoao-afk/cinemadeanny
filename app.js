@@ -1129,8 +1129,11 @@ function escapeHtml(text) {
     await openDetail(itemId, tipo);
 
   } catch (erro) {
-    console.error('Erro ao apagar comentário:', erro);
-    showToast('Erro ao apagar: ' + (erro.code || erro.message));
-  }
+  console.error('Erro ao apagar comentário:', erro);
+  alert(
+    'Erro ao apagar comentário:\n' +
+    'Código: ' + (erro.code || 'desconhecido') +
+    '\nMensagem: ' + erro.message
+  );
    }
 }
