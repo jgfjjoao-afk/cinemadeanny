@@ -385,7 +385,7 @@ function openDetail(id, tipo) {
 }
 
 function closeDetail() {
-  showSection('filmes');
+  showSection(detailReturnSection || 'filmes');
 }
 
 function switchTab(btn, tabId) {
