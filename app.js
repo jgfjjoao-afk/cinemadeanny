@@ -1135,35 +1135,3 @@ function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
-
-   async function excluirComentario(comentarioId, itemId, tipo) {
-      alert('Função executada! ID do comentário: ' + comentarioId);
-  if (!isAdmin) {
-    showToast('Você não tem permissão para apagar comentários.');
-    return;
-  }
-
-  const confirmar = confirm(
-    'Tem certeza que deseja apagar este comentário?'
-  );
-
-  if (!confirmar) return;
-
-  try {
-    await db.collection('comentarios')
-      .doc(comentarioId)
-      .delete();
-
-    showToast('Comentário apagado com sucesso!');
-
-    await openDetail(itemId, tipo);
-
-  } catch (erro) {
-  console.error('Erro ao apagar comentário:', erro);
-  alert(
-    'Erro ao apagar comentário:\n' +
-    'Código: ' + (erro.code || 'desconhecido') +
-    '\nMensagem: ' + erro.message
-  );
-   }
-}
