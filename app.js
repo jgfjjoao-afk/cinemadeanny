@@ -422,6 +422,34 @@ function switchTab(btn, tabId) {
   btn.classList.add('active');
   document.getElementById(tabId).classList.add('active');
 }
+async function excluirComentario(comentarioId, itemId, tipo) {
+  if (!isAdmin) {
+    alert('Você precisa estar conectado como administrador.');
+    return;
+  }
+
+  if (!confirm('Deseja realmente apagar este comentário?')) {
+    return;
+  }
+
+  try {
+    await db.collection('comentarios')
+      .doc(comentarioId)
+      .delete();
+
+    alert('Comentário apagado com sucesso!');
+
+    await openDetail(itemId, tipo);
+
+  } catch (erro) {
+    console.error('Erro ao apagar comentário:', erro);
+
+    alert(
+      'Não foi possível apagar o comentário.\n' +
+      'Erro: ' + (erro.code || erro.message)
+    );
+  }
+}
 
 // ========== COMENTÁRIOS ==========
 async function submitComment(itemId) {
