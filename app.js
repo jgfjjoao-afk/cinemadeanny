@@ -396,13 +396,13 @@ async function openDetail(id, tipo) {
             <div class="comment-text">${escapeHtml(c.texto)}</div>
 
             ${isAdmin ? `
-              <button
-                class="btn btn-danger"
-                style="margin-top:10px;"
-                onclick="excluirComentario('${c.id}', '${id}', '${tipo}')">
-                🗑️ Apagar comentário
-              </button>
-            ` : ''}
+  <button
+    class="btn btn-danger"
+    style="margin-top:10px;"
+    onclick="alert('Botão clicado'); excluirComentario('${c.id}', '${id}', '${tipo}')">
+    🗑️ Apagar comentário
+  </button>
+` : ''}
           </div>
         `).join('') : '<div class="empty-state"><div class="icon">💬</div><h3>Nenhum comentário ainda</h3><p>Seja o primeiro a opinar!</p></div>'}
       </div>
