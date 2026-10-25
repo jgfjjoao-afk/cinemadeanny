@@ -674,15 +674,16 @@ function saveTitle() {
   const genero = generosStr ? generosStr.split(',').map(g => g.trim()).filter(Boolean) : [];
 
   const item = {
-    id,
-    titulo: nome,
-    ano,
-    genero,
-    sinopse,
-    classificacao: classificacao || null,
-    notaAnny: isNaN(nota) ? null : nota,
-    tipo: editingTitleType
-  };
+  id,
+  titulo: nome,
+  ano,
+  genero,
+  sinopse,
+  posterUrl,
+  classificacao: classificacao || null,
+  notaAnny: isNaN(nota) ? null : nota,
+  tipo: editingTitleType
+};
 
   if (editingTitleType === 'serie') {
     item.temporadas = parseInt(document.getElementById('titleTemporadas').value) || 1;
