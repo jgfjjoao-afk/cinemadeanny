@@ -6,7 +6,7 @@
   <meta name="description" content="CinemadeAnny — histórias que merecem ser contadas. Portal de cinema, filmes, séries, documentários e resenhas com visual Old Hollywood.">
   <meta name="theme-color" content="#6B1E2A">
   <title>CinemadeAnny — Histórias que merecem ser contadas</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="estilo.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
 </head>
 <body>
@@ -231,7 +231,7 @@
             <input type="password" id="adminPassword" placeholder="Digite a senha" onkeydown="if(event.key==='Enter')loginAdmin()">
           </div>
           <button class="btn btn-gold" style="width:100%;" onclick="loginAdmin()">Entrar</button>
-          <p style="margin-top:1rem;font-size:0.75rem;color:var(--gray);">Senha padrão: <strong>anny2024</strong> (altere depois no código)</p>
+          <p style="margin-top:1rem;font-size:0.75rem;color:var(--gray);">Senha padrão: <strong>anny2024</strong></p>
         </div>
 
         <div id="adminPanel" class="admin-panel">
@@ -272,7 +272,7 @@
       </div>
     </section>
 
-    <!-- DETAIL VIEW (overlay section) -->
+    <!-- DETAIL VIEW -->
     <section id="detail" class="section">
       <div class="container">
         <button class="back-btn" onclick="closeDetail()">← Voltar</button>
@@ -352,7 +352,7 @@
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
