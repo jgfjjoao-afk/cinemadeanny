@@ -587,6 +587,17 @@ function openTitleModal(tipo, id = null) {
             <textarea id="titleSinopse" placeholder="Breve descrição da obra..." rows="4"></textarea>
           </div>
           <div class="form-group">
+  <label>Link do pôster</label>
+  <input
+    type="url"
+    id="titlePoster"
+    placeholder="https://exemplo.com/poster.jpg"
+  >
+  <small style="color:var(--gray);">
+    Cole o endereço direto da imagem do pôster.
+  </small>
+</div>
+          <div class="form-group">
             <label>Classificação indicativa (opcional)</label>
             <input type="text" id="titleClassificacao" placeholder="Livre, 12 anos, 16 anos...">
           </div>
