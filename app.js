@@ -845,16 +845,46 @@ function editTitle(id, type) {
   openTitleModal(tipo, id);
 }
 
-function deleteTitle(id, type) {
-  if (!confirm('Tem certeza que deseja excluir este título?')) return;
-  const custom = getCustomTitles();
-  custom[type] = (custom[type] || []).filter(t => t.id !== id);
-  saveCustomTitles(custom);
-  updateAdminPanel();
-  renderFilmes();
-  renderSeries();
-  renderDocs();
-  showToast('Título excluído.');
+async function deleteTitle(id, type) {
+  if (!auth.currentUser || auth.currentUser.uid !== 'fKpUgGscF2gDj7KyAEMf1gmSFCI3') {
+    showToast('Entre na conta administrativa para excluir.');
+    return;
+  }
+
+  if (!confirm('Tem certeza que deseja excluir este título?')) {
+    return;
+  }
+
+  const configuracao = {
+    filme: { colecao: 'filmes', chave: 'filmes' },
+    serie: { colecao: 'series', chave: 'series' },
+    doc: { colecao: 'documentarios', chave: 'docs' }
+  };
+
+  const destino = configuracao[type];
+
+  if (!destino) {
+    showToast('Tipo de título inválido.');
+    return;
+  }
+
+  try {
+    await db.collection(destino.colecao).doc(String(id)).delete();
+
+    cloudTitles[destino.chave] = cloudTitles[destino.chave].filter(
+      titulo => titulo.id !== id
+    );
+
+    updateAdminPanel();
+    renderFilmes();
+    renderSeries();
+    renderDocs();
+
+    showToast('Título excluído do Firebase.');
+  } catch (erro) {
+    console.error('Erro ao excluir título:', erro);
+    showToast('Não foi possível excluir o título.');
+  }
 }
 
 // ========== MODAL RESENHA ==========
