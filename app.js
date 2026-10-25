@@ -1134,6 +1134,7 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
 
    async function excluirComentario(comentarioId, itemId, tipo) {
       alert('Função executada! ID do comentário: ' + comentarioId);
