@@ -419,32 +419,63 @@ function renderHomeReviews() {
 
 // ========== ADMIN ==========
 function checkAdminSession() {
-  if (sessionStorage.getItem(STORAGE.admin) === 'true') {
-    isAdmin = true;
-    showAdminUI();
-  }
+  auth.onAuthStateChanged(async (user) => {
+    if (user && user.uid === "fKpUgGscF2gDj7KyAEMf1gmSFCI3") {
+      isAdmin = true;
+      showAdminUI();
+      updateAdminPanel();
+    } else {
+      isAdmin = false;
+      document.getElementById('adminLogin').style.display = 'block';
+      document.getElementById('adminPanel').classList.remove('active');
+      document.getElementById('btnNovaResenha').style.display = 'none';
+    }
+  });
 }
 
-function loginAdmin() {
+async function loginAdmin() {
+  const email = document.getElementById('adminEmail').value.trim();
   const pass = document.getElementById('adminPassword').value;
-  if (pass === 'anny2024') {
+
+  if (!email || !pass) {
+    showToast('Digite seu e-mail e sua senha.');
+    return;
+  }
+
+  try {
+    const resultado = await auth.signInWithEmailAndPassword(email, pass);
+
+    if (resultado.user.uid !== "fKpUgGscF2gDj7KyAEMf1gmSFCI3") {
+      await auth.signOut();
+      showToast('Esta conta não tem permissão administrativa.');
+      return;
+    }
+
     isAdmin = true;
-    sessionStorage.setItem(STORAGE.admin, 'true');
     showAdminUI();
-    showToast('Bem-vinda, Anny! 🎬');
     updateAdminPanel();
-  } else {
-    showToast('Senha incorreta.');
+    showToast('Bem-vinda, Anny! 🎬');
+
+  } catch (erro) {
+    console.error(erro);
+    showToast('E-mail ou senha incorretos.');
   }
 }
 
-function logoutAdmin() {
-  isAdmin = false;
-  sessionStorage.removeItem(STORAGE.admin);
-  document.getElementById('adminLogin').style.display = 'block';
-  document.getElementById('adminPanel').classList.remove('active');
-  document.getElementById('btnNovaResenha').style.display = 'none';
-  showToast('Você saiu da área administrativa.');
+async function logoutAdmin() {
+  try {
+    await auth.signOut();
+    isAdmin = false;
+
+    document.getElementById('adminLogin').style.display = 'block';
+    document.getElementById('adminPanel').classList.remove('active');
+    document.getElementById('btnNovaResenha').style.display = 'none';
+
+    showToast('Você saiu da área administrativa.');
+  } catch (erro) {
+    console.error(erro);
+    showToast('Não foi possível sair da conta.');
+  }
 }
 
 function showAdminUI() {
