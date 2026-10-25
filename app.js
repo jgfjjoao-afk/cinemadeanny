@@ -240,8 +240,12 @@ function openDetail(id, tipo) {
   content.innerHTML = `
     <div class="detail-hero">
       <div class="detail-poster">
-        <div class="detail-poster-placeholder">🎬</div>
-      </div>
+  ${
+    item.posterUrl
+      ? `<img src="${item.posterUrl}" alt="Pôster de ${item.titulo}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';">`
+      : '<div class="detail-poster-placeholder">🎬</div>'
+  }
+</div>
       <div class="detail-info">
         <h1>${item.titulo}</h1>
         <div class="detail-meta">
