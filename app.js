@@ -424,7 +424,7 @@ function switchTab(btn, tabId) {
 }
 async function excluirComentario(comentarioId, itemId, tipo) {
   if (!isAdmin) {
-    alert('Você precisa estar conectado como administrador.');
+    showToast('Você precisa estar conectada como administradora.');
     return;
   }
 
@@ -437,17 +437,14 @@ async function excluirComentario(comentarioId, itemId, tipo) {
       .doc(comentarioId)
       .delete();
 
-    alert('Comentário apagado com sucesso!');
+    showToast('Comentário apagado com sucesso! 🗑️');
 
     await openDetail(itemId, tipo);
 
   } catch (erro) {
     console.error('Erro ao apagar comentário:', erro);
 
-    alert(
-      'Não foi possível apagar o comentário.\n' +
-      'Erro: ' + (erro.code || erro.message)
-    );
+    showToast('Não foi possível apagar o comentário: ' + (erro.code || erro.message));
   }
 }
 
