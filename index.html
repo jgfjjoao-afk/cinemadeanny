@@ -360,7 +360,28 @@
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
-  <script src="data.js"></script>
-  <script src="app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCE8ygnzuRcJlZIDiOe7TGHq0h79xTauGw",
+  authDomain: "anny-63d0d.firebaseapp.com",
+  projectId: "anny-63d0d",
+  storageBucket: "anny-63d0d.firebasestorage.app",
+  messagingSenderId: "782719947622",
+  appId: "1:782719947622:web:a338f340f782cead0c6ea7",
+  measurementId: "G-7325HBXLEE"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+</script>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
