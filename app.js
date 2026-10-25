@@ -1108,6 +1108,7 @@ function escapeHtml(text) {
   return div.innerHTML;
 
    async function excluirComentario(comentarioId, itemId, tipo) {
+      alert('Função executada! ID do comentário: ' + comentarioId);
   if (!isAdmin) {
     showToast('Você não tem permissão para apagar comentários.');
     return;
