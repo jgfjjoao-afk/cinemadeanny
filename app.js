@@ -1,5 +1,6 @@
 /* ========================================
    CINEMADEANNY - Aplicação principal
+   Com painel Admin para adicionar títulos
    ======================================== */
 
 // Estado global
@@ -7,12 +8,15 @@ let currentSection = 'home';
 let isAdmin = false;
 let currentFilter = { filmes: 'all', series: 'all', docs: 'all' };
 let editingReviewId = null;
+let editingTitleId = null;
+let editingTitleType = null;
 
 // Chaves do localStorage
 const STORAGE = {
   reviews: 'cda_reviews',
   comments: 'cda_comments',
-  admin: 'cda_admin_session'
+  admin: 'cda_admin_session',
+  customTitles: 'cda_custom_titles'
 };
 
 // ========== INICIALIZAÇÃO ==========
@@ -57,15 +61,12 @@ function showSection(id) {
     currentSection = id;
   }
 
-  // Atualiza nav ativo
   document.querySelectorAll('.nav-link').forEach(l => {
     l.classList.toggle('active', l.dataset.section === id);
   });
 
-  // Scroll to top
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // Se for admin e logado, atualiza painel
   if (id === 'admin' && isAdmin) {
     updateAdminPanel();
   }
@@ -93,12 +94,14 @@ function initFilters() {
 
 // ========== DADOS / LOCALSTORAGE ==========
 function loadAllData() {
-  // Garante que dados de exemplo existam na primeira visita
   if (!localStorage.getItem(STORAGE.reviews)) {
     localStorage.setItem(STORAGE.reviews, JSON.stringify(SAMPLE_RESENHAS));
   }
   if (!localStorage.getItem(STORAGE.comments)) {
     localStorage.setItem(STORAGE.comments, JSON.stringify({}));
+  }
+  if (!localStorage.getItem(STORAGE.customTitles)) {
+    localStorage.setItem(STORAGE.customTitles, JSON.stringify({ filmes: [], series: [], docs: [] }));
   }
 }
 
@@ -116,6 +119,30 @@ function getComments() {
 
 function saveComments(comments) {
   localStorage.setItem(STORAGE.comments, JSON.stringify(comments));
+}
+
+function getCustomTitles() {
+  return JSON.parse(localStorage.getItem(STORAGE.customTitles) || '{"filmes":[],"series":[],"docs":[]}');
+}
+
+function saveCustomTitles(data) {
+  localStorage.setItem(STORAGE.customTitles, JSON.stringify(data));
+}
+
+// Combina dados de exemplo + títulos criados pelo admin
+function getAllFilmes() {
+  const custom = getCustomTitles().filmes || [];
+  return [...SAMPLE_FILMES, ...custom];
+}
+
+function getAllSeries() {
+  const custom = getCustomTitles().series || [];
+  return [...SAMPLE_SERIES, ...custom];
+}
+
+function getAllDocs() {
+  const custom = getCustomTitles().docs || [];
+  return [...SAMPLE_DOCS, ...custom];
 }
 
 // ========== RENDER CARDS ==========
@@ -146,30 +173,35 @@ function createCard(item) {
 
 function renderFilmes() {
   const grid = document.getElementById('filmesGrid');
-  let items = SAMPLE_FILMES;
+  let items = getAllFilmes();
   const filter = currentFilter.filmes;
   if (filter !== 'all') {
-    items = items.filter(f => f.genero.some(g => g.toLowerCase().includes(filter.toLowerCase()) || filter.toLowerCase().includes(g.toLowerCase())));
+    items = items.filter(f => (f.genero || []).some(g => 
+      g.toLowerCase().includes(filter.toLowerCase()) || filter.toLowerCase().includes(g.toLowerCase())
+    ));
   }
   grid.innerHTML = items.map(createCard).join('') || '<div class="empty-state"><div class="icon">🎞️</div><h3>Nenhum filme encontrado</h3></div>';
 }
 
 function renderSeries() {
   const grid = document.getElementById('seriesGrid');
-  let items = SAMPLE_SERIES;
+  let items = getAllSeries();
   const filter = currentFilter.series;
   if (filter !== 'all') {
-    items = items.filter(s => s.genero.some(g => g.toLowerCase().includes(filter.toLowerCase())));
+    items = items.filter(s => (s.genero || []).some(g => g.toLowerCase().includes(filter.toLowerCase())));
   }
   grid.innerHTML = items.map(createCard).join('') || '<div class="empty-state"><div class="icon">📺</div><h3>Nenhuma série encontrada</h3></div>';
 }
 
 function renderDocs() {
   const grid = document.getElementById('docsGrid');
-  let items = SAMPLE_DOCS;
+  let items = getAllDocs();
   const filter = currentFilter.docs;
   if (filter !== 'all') {
-    items = items.filter(d => (d.genero || []).some(g => g.toLowerCase().includes(filter.toLowerCase())) || (d.tema || '').toLowerCase().includes(filter.toLowerCase()));
+    items = items.filter(d => 
+      (d.genero || []).some(g => g.toLowerCase().includes(filter.toLowerCase())) || 
+      (d.tema || '').toLowerCase().includes(filter.toLowerCase())
+    );
   }
   grid.innerHTML = items.map(createCard).join('') || '<div class="empty-state"><div class="icon">🎥</div><h3>Nenhum documentário encontrado</h3></div>';
 }
@@ -188,9 +220,9 @@ function renderCuriosidades() {
 // ========== DETALHE ==========
 function openDetail(id, tipo) {
   let item = null;
-  if (tipo === 'filme') item = SAMPLE_FILMES.find(f => f.id === id);
-  else if (tipo === 'serie') item = SAMPLE_SERIES.find(s => s.id === id);
-  else if (tipo === 'doc') item = SAMPLE_DOCS.find(d => d.id === id);
+  if (tipo === 'filme') item = getAllFilmes().find(f => f.id === id);
+  else if (tipo === 'serie') item = getAllSeries().find(s => s.id === id);
+  else if (tipo === 'doc') item = getAllDocs().find(d => d.id === id);
 
   if (!item) return;
 
@@ -215,13 +247,13 @@ function openDetail(id, tipo) {
           ${item.status ? `<span>· ${item.status}</span>` : ''}
         </div>
         <div class="detail-rating">
-          ${item.notaAnny ? `<div class="rating-score">${item.notaAnny}</div><div class="rating-stars">${'★'.repeat(Math.round(item.notaAnny/2))}${'☆'.repeat(5-Math.round(item.notaAnny/2))}</div><span style="color:var(--gray-light);font-size:0.85rem;">Nota da Anny</span>` : ''}
-          ${avgPublic ? `<div style="margin-left:1.5rem;"><span style="color:var(--gold);font-weight:600;">${avgPublic}</span> <span style="color:var(--gray-light);font-size:0.85rem;">Público (${comments.length})</span></div>` : ''}
+          ${item.notaAnny ? `<div class="rating-score">${item.notaAnny}</div><div class="rating-stars">${'★'.repeat(Math.round(item.notaAnny/2))}${'☆'.repeat(5-Math.round(item.notaAnny/2))}</div><span style="color:var(--gray);font-size:0.85rem;">Nota da Anny</span>` : ''}
+          ${avgPublic ? `<div style="margin-left:1.5rem;"><span style="color:var(--gold);font-weight:600;">${avgPublic}</span> <span style="color:var(--gray);font-size:0.85rem;">Público (${comments.length})</span></div>` : ''}
         </div>
         <div>${(item.genero||[]).map(g => `<span class="card-genre">${g}</span>`).join('')}</div>
         <p class="detail-synopsis">${item.sinopse || ''}</p>
-        ${item.elenco ? `<p style="font-size:0.9rem;color:var(--gray-light);margin-bottom:0.4rem;"><strong>Elenco:</strong> ${item.elenco}</p>` : ''}
-        ${item.direcao ? `<p style="font-size:0.9rem;color:var(--gray-light);"><strong>Direção:</strong> ${item.direcao}</p>` : ''}
+        ${item.elenco ? `<p style="font-size:0.9rem;color:var(--gray);margin-bottom:0.4rem;"><strong>Elenco:</strong> ${item.elenco}</p>` : ''}
+        ${item.direcao ? `<p style="font-size:0.9rem;color:var(--gray);"><strong>Direção:</strong> ${item.direcao}</p>` : ''}
       </div>
     </div>
 
@@ -240,14 +272,14 @@ function openDetail(id, tipo) {
             </div>
             <div class="review-score">${r.nota}</div>
           </div>
-          <div class="review-body">${r.corpo.split('\n').map(p => `<p>${p}</p>`).join('')}</div>
+          <div class="review-body">${r.corpo.split('\\n').map(p => `<p>${p}</p>`).join('')}</div>
         </div>
       `).join('') : '<div class="empty-state"><div class="icon">✍️</div><h3>Ainda não há resenha da Anny para este título</h3><p>Volte em breve!</p></div>'}
     </div>
 
     <div id="tab-comentarios" class="tab-content">
       <div class="comment-form">
-        <h4 style="margin-bottom:1rem;color:var(--gold);">Deixe sua opinião</h4>
+        <h4 style="margin-bottom:1rem;color:var(--primary-light);">Deixe sua opinião</h4>
         <div class="form-row">
           <div class="form-group">
             <label>Seu nome ou apelido</label>
@@ -283,9 +315,7 @@ function openDetail(id, tipo) {
 }
 
 function closeDetail() {
-  // Volta para a seção anterior lógica
-  const prev = currentSection === 'detail' ? 'filmes' : currentSection;
-  showSection(prev === 'detail' ? 'home' : prev);
+  showSection('filmes');
 }
 
 function switchTab(btn, tabId) {
@@ -327,8 +357,7 @@ function submitComment(itemId) {
   saveComments(comments);
   showToast('Opinião publicada com sucesso! 🎬');
   
-  // Reabre o detalhe para atualizar
-  const item = [...SAMPLE_FILMES, ...SAMPLE_SERIES, ...SAMPLE_DOCS].find(i => i.id === itemId);
+  const item = [...getAllFilmes(), ...getAllSeries(), ...getAllDocs()].find(i => i.id === itemId);
   if (item) openDetail(itemId, item.tipo);
 }
 
@@ -347,11 +376,11 @@ function renderResenhas() {
       <div class="review-header">
         <div>
           <div class="review-title">${escapeHtml(r.titulo)}</div>
-          <div class="review-meta">${r.filme} · ${r.genero || ''} · ${r.data || ''}</div>
+          <div class="review-meta">${escapeHtml(r.filme)} · ${r.genero || ''} · ${r.data || ''}</div>
         </div>
         <div class="review-score">${r.nota}</div>
       </div>
-      <div class="review-body">${r.corpo.split('\n').map(p => `<p>${escapeHtml(p)}</p>`).join('')}</div>
+      <div class="review-body">${r.corpo.split('\\n').map(p => `<p>${escapeHtml(p)}</p>`).join('')}</div>
     </div>
   `).join('');
 }
@@ -390,7 +419,6 @@ function checkAdminSession() {
 
 function loginAdmin() {
   const pass = document.getElementById('adminPassword').value;
-  // Senha padrão — a Anny pode alterar depois no código
   if (pass === 'anny2024') {
     isAdmin = true;
     sessionStorage.setItem(STORAGE.admin, 'true');
@@ -423,29 +451,271 @@ function updateAdminPanel() {
   let totalComments = 0;
   Object.values(comments).forEach(arr => totalComments += arr.length);
 
+  const custom = getCustomTitles();
+  const totalFilmes = SAMPLE_FILMES.length + (custom.filmes || []).length;
+  const totalSeries = SAMPLE_SERIES.length + (custom.series || []).length;
+
   document.getElementById('statResenhas').textContent = reviews.length;
   document.getElementById('statComentarios').textContent = totalComments;
-  document.getElementById('statFilmes').textContent = SAMPLE_FILMES.length;
-  document.getElementById('statSeries').textContent = SAMPLE_SERIES.length;
+  document.getElementById('statFilmes').textContent = totalFilmes;
+  document.getElementById('statSeries').textContent = totalSeries;
 
+  // Lista de resenhas
   const list = document.getElementById('adminResenhasList');
+  let html = '';
+
+  // Seção de adicionar títulos
+  html += `
+    <div style="margin-bottom:2.5rem;">
+      <h3 style="margin-bottom:1rem;color:var(--gold);">➕ Adicionar Títulos</h3>
+      <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+        <button class="btn btn-gold btn-sm" onclick="openTitleModal('filme')">+ Filme</button>
+        <button class="btn btn-gold btn-sm" onclick="openTitleModal('serie')">+ Série</button>
+        <button class="btn btn-gold btn-sm" onclick="openTitleModal('doc')">+ Documentário</button>
+      </div>
+
+      <h4 style="margin-bottom:0.8rem;color:var(--primary-light);">Filmes adicionados por você</h4>
+      <div id="adminCustomFilmes">${renderCustomTitlesList('filmes')}</div>
+
+      <h4 style="margin:1.5rem 0 0.8rem;color:var(--primary-light);">Séries adicionadas por você</h4>
+      <div id="adminCustomSeries">${renderCustomTitlesList('series')}</div>
+
+      <h4 style="margin:1.5rem 0 0.8rem;color:var(--primary-light);">Documentários adicionados por você</h4>
+      <div id="adminCustomDocs">${renderCustomTitlesList('docs')}</div>
+    </div>
+
+    <h3 style="margin-bottom:1rem;color:var(--gold);">Resenhas publicadas</h3>
+  `;
+
   if (!reviews.length) {
-    list.innerHTML = '<p style="color:var(--gray);">Nenhuma resenha ainda.</p>';
-    return;
+    html += '<p style="color:var(--gray);">Nenhuma resenha ainda.</p>';
+  } else {
+    html += reviews.map(r => `
+      <div class="review-card" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;">
+        <div>
+          <div class="review-title" style="font-size:1.05rem;">${escapeHtml(r.titulo)}</div>
+          <div class="review-meta">${escapeHtml(r.filme)} · ${r.status} · Nota ${r.nota}</div>
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-shrink:0;">
+          <button class="btn btn-outline btn-sm" onclick="editReview('${r.id}')">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteReview('${r.id}')">Excluir</button>
+        </div>
+      </div>
+    `).join('');
   }
 
-  list.innerHTML = reviews.map(r => `
-    <div class="review-card" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;">
+  list.innerHTML = html;
+}
+
+function renderCustomTitlesList(type) {
+  const custom = getCustomTitles();
+  const items = custom[type] || [];
+  if (!items.length) {
+    return '<p style="color:var(--gray);font-size:0.85rem;">Nenhum adicionado ainda.</p>';
+  }
+  return items.map(item => `
+    <div class="review-card" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1rem;">
       <div>
-        <div class="review-title" style="font-size:1.05rem;">${escapeHtml(r.titulo)}</div>
-        <div class="review-meta">${escapeHtml(r.filme)} · ${r.status} · Nota ${r.nota}</div>
+        <div style="font-weight:600;">${escapeHtml(item.titulo)}</div>
+        <div class="review-meta">${item.ano || ''} · Nota ${item.notaAnny || '-'}</div>
       </div>
-      <div style="display:flex;gap:0.5rem;flex-shrink:0;">
-        <button class="btn btn-outline btn-sm" onclick="editReview('${r.id}')">Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteReview('${r.id}')">Excluir</button>
+      <div style="display:flex;gap:0.4rem;flex-shrink:0;">
+        <button class="btn btn-outline btn-sm" onclick="editTitle('${item.id}', '${type}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTitle('${item.id}', '${type}')">Excluir</button>
       </div>
     </div>
   `).join('');
+}
+
+// ========== MODAL DE TÍTULOS (FILME / SÉRIE / DOC) ==========
+function openTitleModal(tipo, id = null) {
+  if (!isAdmin) {
+    showToast('Faça login na área Admin.');
+    showSection('admin');
+    return;
+  }
+
+  editingTitleId = id;
+  editingTitleType = tipo;
+
+  // Cria modal dinamicamente se não existir
+  let modal = document.getElementById('titleModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'titleModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="titleModalTitle">Novo Título</h3>
+          <button class="modal-close" onclick="closeTitleModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="titleId">
+          <div class="form-group">
+            <label>Título</label>
+            <input type="text" id="titleNome" placeholder="Nome do filme, série ou documentário">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Ano</label>
+              <input type="number" id="titleAno" placeholder="2024" min="1900" max="2030">
+            </div>
+            <div class="form-group">
+              <label>Nota da Anny (0 a 10)</label>
+              <input type="number" id="titleNota" min="0" max="10" step="0.5" placeholder="8.5">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Gêneros (separados por vírgula)</label>
+            <input type="text" id="titleGeneros" placeholder="Drama, Romance, Suspense">
+          </div>
+          <div class="form-group" id="titleTemporadasGroup" style="display:none;">
+            <label>Número de temporadas</label>
+            <input type="number" id="titleTemporadas" min="1" placeholder="1">
+          </div>
+          <div class="form-group" id="titleStatusGroup" style="display:none;">
+            <label>Status</label>
+            <select id="titleStatus">
+              <option value="Em andamento">Em andamento</option>
+              <option value="Concluída">Concluída</option>
+              <option value="Cancelada">Cancelada</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sinopse</label>
+            <textarea id="titleSinopse" placeholder="Breve descrição da obra..." rows="4"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Classificação indicativa (opcional)</label>
+            <input type="text" id="titleClassificacao" placeholder="Livre, 12 anos, 16 anos...">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeTitleModal()">Cancelar</button>
+          <button class="btn btn-gold" onclick="saveTitle()">Salvar</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  const tipoNome = tipo === 'filme' ? 'Filme' : tipo === 'serie' ? 'Série' : 'Documentário';
+  document.getElementById('titleModalTitle').textContent = id ? `Editar ${tipoNome}` : `Novo ${tipoNome}`;
+
+  // Mostra campos extras para séries
+  document.getElementById('titleTemporadasGroup').style.display = tipo === 'serie' ? 'block' : 'none';
+  document.getElementById('titleStatusGroup').style.display = tipo === 'serie' ? 'block' : 'none';
+
+  // Preenche se estiver editando
+  if (id) {
+    const custom = getCustomTitles();
+    const item = (custom[tipo === 'filme' ? 'filmes' : tipo === 'serie' ? 'series' : 'docs'] || []).find(t => t.id === id);
+    if (item) {
+      document.getElementById('titleId').value = item.id;
+      document.getElementById('titleNome').value = item.titulo || '';
+      document.getElementById('titleAno').value = item.ano || '';
+      document.getElementById('titleNota').value = item.notaAnny || '';
+      document.getElementById('titleGeneros').value = (item.genero || []).join(', ');
+      document.getElementById('titleSinopse').value = item.sinopse || '';
+      document.getElementById('titleClassificacao').value = item.classificacao || '';
+      if (tipo === 'serie') {
+        document.getElementById('titleTemporadas').value = item.temporadas || '';
+        document.getElementById('titleStatus').value = item.status || 'Em andamento';
+      }
+    }
+  } else {
+    document.getElementById('titleId').value = '';
+    document.getElementById('titleNome').value = '';
+    document.getElementById('titleAno').value = '';
+    document.getElementById('titleNota').value = '';
+    document.getElementById('titleGeneros').value = '';
+    document.getElementById('titleSinopse').value = '';
+    document.getElementById('titleClassificacao').value = '';
+    document.getElementById('titleTemporadas').value = '';
+  }
+
+  modal.classList.add('active');
+}
+
+function closeTitleModal() {
+  const modal = document.getElementById('titleModal');
+  if (modal) modal.classList.remove('active');
+  editingTitleId = null;
+  editingTitleType = null;
+}
+
+function saveTitle() {
+  const nome = document.getElementById('titleNome').value.trim();
+  const ano = parseInt(document.getElementById('titleAno').value) || null;
+  const nota = parseFloat(document.getElementById('titleNota').value);
+  const generosStr = document.getElementById('titleGeneros').value.trim();
+  const sinopse = document.getElementById('titleSinopse').value.trim();
+  const classificacao = document.getElementById('titleClassificacao').value.trim();
+  const id = document.getElementById('titleId').value || (editingTitleType.charAt(0) + Date.now());
+
+  if (!nome) {
+    showToast('Digite o título da obra.');
+    return;
+  }
+
+  const genero = generosStr ? generosStr.split(',').map(g => g.trim()).filter(Boolean) : [];
+
+  const item = {
+    id,
+    titulo: nome,
+    ano,
+    genero,
+    sinopse,
+    classificacao: classificacao || null,
+    notaAnny: isNaN(nota) ? null : nota,
+    tipo: editingTitleType
+  };
+
+  if (editingTitleType === 'serie') {
+    item.temporadas = parseInt(document.getElementById('titleTemporadas').value) || 1;
+    item.status = document.getElementById('titleStatus').value;
+  }
+
+  if (editingTitleType === 'doc') {
+    item.tema = genero[0] || 'Geral';
+  }
+
+  const custom = getCustomTitles();
+  const key = editingTitleType === 'filme' ? 'filmes' : editingTitleType === 'serie' ? 'series' : 'docs';
+  
+  const existingIdx = (custom[key] || []).findIndex(t => t.id === id);
+  if (existingIdx >= 0) {
+    custom[key][existingIdx] = item;
+  } else {
+    if (!custom[key]) custom[key] = [];
+    custom[key].unshift(item);
+  }
+
+  saveCustomTitles(custom);
+  closeTitleModal();
+  updateAdminPanel();
+  renderFilmes();
+  renderSeries();
+  renderDocs();
+  showToast('Título salvo com sucesso! 🎬');
+}
+
+function editTitle(id, type) {
+  const tipo = type === 'filmes' ? 'filme' : type === 'series' ? 'serie' : 'doc';
+  openTitleModal(tipo, id);
+}
+
+function deleteTitle(id, type) {
+  if (!confirm('Tem certeza que deseja excluir este título?')) return;
+  const custom = getCustomTitles();
+  custom[type] = (custom[type] || []).filter(t => t.id !== id);
+  saveCustomTitles(custom);
+  updateAdminPanel();
+  renderFilmes();
+  renderSeries();
+  renderDocs();
+  showToast('Título excluído.');
 }
 
 // ========== MODAL RESENHA ==========
@@ -557,16 +827,14 @@ function deleteReview(id) {
 function handleSearch(query) {
   query = query.trim().toLowerCase();
   if (!query) {
-    // Restaura filtros atuais
     if (currentSection === 'filmes') renderFilmes();
     if (currentSection === 'series') renderSeries();
     if (currentSection === 'docs') renderDocs();
     return;
   }
 
-  // Busca simples nos títulos
   if (currentSection === 'filmes' || currentSection === 'home') {
-    const filtered = SAMPLE_FILMES.filter(f => 
+    const filtered = getAllFilmes().filter(f => 
       f.titulo.toLowerCase().includes(query) || 
       (f.sinopse||'').toLowerCase().includes(query) ||
       (f.genero||[]).some(g => g.toLowerCase().includes(query))
