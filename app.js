@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderSeries();
   renderDocs();
   loadCloudTitles();
+  carregarInesqueciveis();
   renderCuriosidades();
   renderResenhas();
 });
@@ -574,6 +575,7 @@ function checkAdminSession() {
       updateAdminPanel();
     } else {
       isAdmin = false;
+      renderInesqueciveis();
       document.getElementById('adminLogin').style.display = 'block';
       document.getElementById('adminPanel').classList.remove('active');
       document.getElementById('btnNovaResenha').style.display = 'none';
@@ -614,6 +616,7 @@ async function logoutAdmin() {
   try {
     await auth.signOut();
     isAdmin = false;
+    renderInesqueciveis();
 
     document.getElementById('adminLogin').style.display = 'block';
     document.getElementById('adminPanel').classList.remove('active');
@@ -630,6 +633,7 @@ function showAdminUI() {
   document.getElementById('adminLogin').style.display = 'none';
   document.getElementById('adminPanel').classList.add('active');
   document.getElementById('btnNovaResenha').style.display = 'inline-flex';
+  renderInesqueciveis();
 }
 
 function updateAdminPanel() {
@@ -1138,6 +1142,100 @@ function handleSearch(query) {
 }
 
 // ========== UTILITÁRIOS ==========
+// ========== FILMES INESQUECÍVEIS ==========
+let inesqueciveis = [];
+
+async function carregarInesqueciveis() {
+  try {
+    const resultado = await db.collection('inesqueciveis')
+      .orderBy('criadoEm')
+      .get();
+
+    inesqueciveis = resultado.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (erro) {
+    console.error('Erro ao carregar filmes inesquecíveis:', erro);
+    inesqueciveis = [];
+  }
+  renderInesqueciveis();
+}
+
+function renderInesqueciveis() {
+  const box = document.getElementById('favoritesBox');
+  const list = document.getElementById('favoritesList');
+  const form = document.getElementById('favoritesAdmin');
+  if (!box || !list) return;
+
+  box.style.display = (inesqueciveis.length || isAdmin) ? 'block' : 'none';
+  if (form) form.style.display = isAdmin ? 'flex' : 'none';
+
+  list.innerHTML = inesqueciveis.length
+    ? inesqueciveis.map(f => `
+        <span class="fav-tag">${escapeHtml(f.nome)}${isAdmin ? `
+          <button type="button" title="Remover"
+            onclick="removerInesquecivel('${f.id}')"
+            style="background:none;border:none;color:inherit;cursor:pointer;margin-left:6px;font-size:1rem;line-height:1;">×</button>` : ''}
+        </span>`).join('')
+    : '<span style="opacity:.7;">Nenhum filme adicionado ainda.</span>';
+}
+
+async function adicionarInesquecivel() {
+  if (!auth.currentUser || !ADMIN_UIDS.includes(auth.currentUser.uid)) {
+    showToast('Entre na conta administrativa para adicionar.');
+    return;
+  }
+
+  const input = document.getElementById('favoritoNome');
+  const nome = input.value.trim();
+
+  if (nome.length < 2) {
+    showToast('Digite o nome do filme.');
+    return;
+  }
+
+  if (inesqueciveis.some(f => String(f.nome).toLowerCase() === nome.toLowerCase())) {
+    showToast('Esse filme já está na lista.');
+    return;
+  }
+
+  try {
+    await db.collection('inesqueciveis').add({
+      nome: nome,
+      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    input.value = '';
+    showToast('Filme adicionado! 🎬');
+    await carregarInesqueciveis();
+  } catch (erro) {
+    console.error('Erro ao adicionar filme inesquecível:', erro);
+    showToast('Não foi possível adicionar: ' + (erro.code || erro.message));
+  }
+}
+
+async function removerInesquecivel(id) {
+  if (!auth.currentUser || !ADMIN_UIDS.includes(auth.currentUser.uid)) {
+    showToast('Entre na conta administrativa para remover.');
+    return;
+  }
+
+  const filme = inesqueciveis.find(f => f.id === id);
+  if (!confirm('Remover "' + (filme ? filme.nome : 'este filme') + '" da lista?')) {
+    return;
+  }
+
+  try {
+    await db.collection('inesqueciveis').doc(id).delete();
+    showToast('Filme removido da lista.');
+    await carregarInesqueciveis();
+  } catch (erro) {
+    console.error('Erro ao remover filme inesquecível:', erro);
+    showToast('Não foi possível remover: ' + (erro.code || erro.message));
+  }
+}
+
 function showToast(msg) {
   const toast = document.getElementById('toast');
   toast.textContent = msg;
