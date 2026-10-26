@@ -7,6 +7,20 @@
 let currentSection = 'home';
 let detailReturnSection = 'filmes';
 let isAdmin = false;
+
+// UIDs das contas administradoras (para adicionar outra admin, inclua o UID aqui
+// e também nas regras do Firestore)
+const ADMIN_UIDS = ["fKpUgGscF2gDj7KyAEMf1gmSFCI3"];
+
+// Nomes que lembram "ADM" são reservados para administradores
+function nomeReservado(nome) {
+  const limpo = String(nome)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[4@]/g, 'a')
+    .replace(/[^a-z]/g, '');
+  return limpo.includes('adm');
+}
 let currentFilter = { filmes: 'all', series: 'all', docs: 'all' };
 let editingReviewId = null;
 let editingTitleId = null;
@@ -389,7 +403,7 @@ async function openDetail(id, tipo) {
         ${comments.length ? comments.slice().reverse().map(c => `
           <div class="comment-item">
             <div>
-              <span class="comment-author">${escapeHtml(c.nome)}</span>
+              <span class="comment-author">${escapeHtml(c.nome)}</span>${c.isAdmin === true ? ' <span class="admin-tag" style="display:inline-block;background:linear-gradient(135deg,#f5c542,#d4a017);color:#1a1a1a;font-size:.7rem;font-weight:700;padding:2px 7px;border-radius:6px;letter-spacing:.5px;vertical-align:middle;">ADM</span>' : ''}
               <span class="comment-date">${c.data}</span>
             </div>
                         <div class="comment-rating">★ ${c.nota}/10</div>
@@ -459,6 +473,11 @@ async function submitComment(itemId) {
     return;
   }
 
+  if (!isAdmin && nomeReservado(nome)) {
+    showToast('Esse nome é reservado para administradores. Escolha outro. 🙂');
+    return;
+  }
+
   if (isNaN(nota) || nota < 0 || nota > 10) {
     showToast('A nota deve ser entre 0 e 10.');
     return;
@@ -483,6 +502,7 @@ async function submitComment(itemId) {
       nome: nome,
       nota: nota,
       texto: texto,
+      isAdmin: isAdmin === true,
       data: new Date().toLocaleDateString('pt-BR'),
       criadoEm: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -548,7 +568,7 @@ function renderHomeReviews() {
 // ========== ADMIN ==========
 function checkAdminSession() {
   auth.onAuthStateChanged(async (user) => {
-    if (user && user.uid === "fKpUgGscF2gDj7KyAEMf1gmSFCI3") {
+    if (user && ADMIN_UIDS.includes(user.uid)) {
       isAdmin = true;
       showAdminUI();
       updateAdminPanel();
@@ -573,7 +593,7 @@ async function loginAdmin() {
   try {
     const resultado = await auth.signInWithEmailAndPassword(email, pass);
 
-    if (resultado.user.uid !== "fKpUgGscF2gDj7KyAEMf1gmSFCI3") {
+    if (!ADMIN_UIDS.includes(resultado.user.uid)) {
       await auth.signOut();
       showToast('Esta conta não tem permissão administrativa.');
       return;
@@ -838,7 +858,7 @@ async function saveTitle() {
     return;
   }
 
-  if (!auth.currentUser || auth.currentUser.uid !== 'fKpUgGscF2gDj7KyAEMf1gmSFCI3') {
+  if (!auth.currentUser || !ADMIN_UIDS.includes(auth.currentUser.uid)) {
     showToast('Entre na conta administrativa para salvar.');
     return;
   }
@@ -912,8 +932,7 @@ function editTitle(id, type) {
 }
 
 async function deleteTitle(id, type) {
-  if (!auth.currentUser ||
-      auth.currentUser.uid !== 'fKpUgGscF2gDj7KyAEMf1gmSFCI3') {
+  if (!auth.currentUser || !ADMIN_UIDS.includes(auth.currentUser.uid)) {
     showToast('Entre na conta administrativa para excluir.');
     return;
   }
