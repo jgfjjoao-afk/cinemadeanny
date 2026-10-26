@@ -206,14 +206,15 @@
             <p>Bem-vindo ao <strong>CinemadeAnny</strong>. Este espaço nasceu da minha paixão profunda pelo cinema — desde os clássicos dourados de Hollywood até as produções contemporâneas que nos fazem refletir.</p>
             <p>Aqui você encontra minhas resenhas honestas, curiosidades dos bastidores e um convite para compartilhar suas próprias opiniões. Acredito que cada filme, série ou documentário carrega uma história que merece ser contada e discutida.</p>
             <p>Meus gêneros favoritos incluem drama, romance clássico, suspense psicológico e documentários que revelam lados inesperados da realidade. Mas estou sempre aberta a novas descobertas.</p>
-            <h4 style="margin-top:1.5rem; color:var(--gold);">Filmes inesquecíveis</h4>
-            <div class="favorites-list">
-              <span class="fav-tag">Casablanca</span>
-              <span class="fav-tag">O Poderoso Chefão</span>
-              <span class="fav-tag">A Felicidade Não se Compra</span>
-              <span class="fav-tag">Cidadão Kane</span>
-              <span class="fav-tag">Cantando na Chuva</span>
-              <span class="fav-tag">Psicose</span>
+            <div id="favoritesBox" style="display:none;">
+              <h4 style="margin-top:1.5rem; color:var(--gold);">Filmes inesquecíveis</h4>
+              <div class="favorites-list" id="favoritesList"></div>
+              <div id="favoritesAdmin" style="display:none; gap:.5rem; margin-top:1rem; flex-wrap:wrap;">
+                <input type="text" id="favoritoNome" placeholder="Adicionar filme inesquecível" maxlength="80"
+                       style="flex:1; min-width:200px;"
+                       onkeydown="if(event.key==='Enter'){adicionarInesquecivel();}">
+                <button type="button" class="btn btn-gold btn-sm" onclick="adicionarInesquecivel()">+ Adicionar</button>
+              </div>
             </div>
           </div>
         </div>
