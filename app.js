@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadCloudTitles();
   carregarInesqueciveis();
   renderCuriosidades();
+  carregarCuriosidades();
   renderResenhas();
 });
 
@@ -302,15 +303,178 @@ function renderDocs() {
   grid.innerHTML = items.map(createCard).join('') || '<div class="empty-state"><div class="icon">🎥</div><h3>Nenhum documentário encontrado</h3></div>';
 }
 
+// ========== CURIOSIDADES ==========
+let curiosidadesNuvem = [];
+
+async function carregarCuriosidades() {
+  try {
+    const resultado = await db.collection('curiosidades')
+      .orderBy('criadoEm', 'desc')
+      .get();
+
+    curiosidadesNuvem = resultado.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (erro) {
+    console.error('Erro ao carregar curiosidades:', erro);
+    curiosidadesNuvem = [];
+  }
+  renderCuriosidades();
+}
+
 function renderCuriosidades() {
   const grid = document.getElementById('curiosidadesGrid');
-  grid.innerHTML = SAMPLE_CURIOSIDADES.map(c => `
+  if (!grid) return;
+
+  const btnNova = document.getElementById('btnNovaCuriosidade');
+  if (btnNova) btnNova.style.display = isAdmin ? 'inline-flex' : 'none';
+
+  const daNuvem = curiosidadesNuvem.map(c => ({
+    id: c.id,
+    titulo: c.titulo,
+    texto: c.texto,
+    tag: [c.tipo, c.obra].filter(Boolean).join(' · ') || 'Curiosidade',
+    nuvem: true
+  }));
+
+  grid.innerHTML = [...daNuvem, ...SAMPLE_CURIOSIDADES].map(c => `
     <div class="curiosity-card">
-      <h3>${c.titulo}</h3>
-      <p>${c.texto}</p>
-      <span class="curiosity-tag">${c.tag}</span>
+      <h3>${escapeHtml(c.titulo)}</h3>
+      <p>${escapeHtml(c.texto)}</p>
+      <span class="curiosity-tag">${escapeHtml(c.tag)}</span>
+      ${isAdmin && c.nuvem ? `
+        <div style="margin-top:12px;">
+          <button type="button" class="btn btn-danger btn-sm"
+            onclick="excluirCuriosidade('${c.id}')">🗑️ Apagar</button>
+        </div>` : ''}
     </div>
   `).join('');
+}
+
+function openCuriosityModal() {
+  if (!isAdmin) {
+    showToast('Faça login na área Admin.');
+    showSection('admin');
+    return;
+  }
+
+  let modal = document.getElementById('curiosityModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'curiosityModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Nova Curiosidade</h3>
+          <button class="modal-close" onclick="closeCuriosityModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Título da curiosidade</label>
+            <input type="text" id="curioTitulo" maxlength="120"
+              placeholder="Ex: O chuveiro de Psicose foi filmado com chocolate">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nome da obra</label>
+              <input type="text" id="curioObra" maxlength="80" placeholder="Ex: Psicose">
+            </div>
+            <div class="form-group">
+              <label>Tipo</label>
+              <select id="curioTipo">
+                <option value="Filme">Filme</option>
+                <option value="Série">Série</option>
+                <option value="Documentário">Documentário</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Curiosidade</label>
+            <textarea id="curioTexto" rows="6" maxlength="2000"
+              placeholder="Conte o segredo, o bastidor ou o fato surpreendente..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeCuriosityModal()">Cancelar</button>
+          <button class="btn btn-gold" onclick="salvarCuriosidade()">Salvar</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  document.getElementById('curioTitulo').value = '';
+  document.getElementById('curioObra').value = '';
+  document.getElementById('curioTipo').value = 'Filme';
+  document.getElementById('curioTexto').value = '';
+  modal.classList.add('active');
+}
+
+function closeCuriosityModal() {
+  const modal = document.getElementById('curiosityModal');
+  if (modal) modal.classList.remove('active');
+}
+
+async function salvarCuriosidade() {
+  if (!auth.currentUser || !ADMIN_UIDS.includes(auth.currentUser.uid)) {
+    showToast('Entre na conta administrativa para salvar.');
+    return;
+  }
+
+  const titulo = document.getElementById('curioTitulo').value.trim();
+  const obra = document.getElementById('curioObra').value.trim();
+  const tipo = document.getElementById('curioTipo').value;
+  const texto = document.getElementById('curioTexto').value.trim();
+
+  if (titulo.length < 3) {
+    showToast('Digite um título para a curiosidade.');
+    return;
+  }
+
+  if (texto.length < 10) {
+    showToast('Escreva a curiosidade com um pouco mais de detalhes.');
+    return;
+  }
+
+  try {
+    await db.collection('curiosidades').add({
+      titulo: titulo,
+      obra: obra,
+      tipo: tipo,
+      texto: texto,
+      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    closeCuriosityModal();
+    showToast('Curiosidade publicada! 💡');
+    await carregarCuriosidades();
+  } catch (erro) {
+    console.error('Erro ao salvar curiosidade:', erro);
+    showToast('Não foi possível salvar: ' + (erro.code || erro.message));
+  }
+}
+
+async function excluirCuriosidade(id) {
+  if (!auth.currentUser || !ADMIN_UIDS.includes(auth.currentUser.uid)) {
+    showToast('Entre na conta administrativa para apagar.');
+    return;
+  }
+
+  const c = curiosidadesNuvem.find(x => x.id === id);
+  if (!confirm('Apagar a curiosidade "' + (c ? c.titulo : 'selecionada') + '"?')) {
+    return;
+  }
+
+  try {
+    await db.collection('curiosidades').doc(id).delete();
+    showToast('Curiosidade apagada.');
+    await carregarCuriosidades();
+  } catch (erro) {
+    console.error('Erro ao apagar curiosidade:', erro);
+    showToast('Não foi possível apagar: ' + (erro.code || erro.message));
+  }
 }
 
 // ========== DETALHE ==========
@@ -576,6 +740,7 @@ function checkAdminSession() {
     } else {
       isAdmin = false;
       renderInesqueciveis();
+      renderCuriosidades();
       document.getElementById('adminLogin').style.display = 'block';
       document.getElementById('adminPanel').classList.remove('active');
       document.getElementById('btnNovaResenha').style.display = 'none';
@@ -617,6 +782,7 @@ async function logoutAdmin() {
     await auth.signOut();
     isAdmin = false;
     renderInesqueciveis();
+    renderCuriosidades();
 
     document.getElementById('adminLogin').style.display = 'block';
     document.getElementById('adminPanel').classList.remove('active');
@@ -634,6 +800,7 @@ function showAdminUI() {
   document.getElementById('adminPanel').classList.add('active');
   document.getElementById('btnNovaResenha').style.display = 'inline-flex';
   renderInesqueciveis();
+  renderCuriosidades();
 }
 
 function updateAdminPanel() {
