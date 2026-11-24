@@ -22,7 +22,3 @@ const SAMPLE_CURIOSIDADES = [
 const SAMPLE_RESENHAS = [
    
 ];
-
-const SAMPLE_RESENHAS_DA_COMUNIDADE = [
-
-];
